@@ -58,7 +58,7 @@ Goroutine adalah fungsi yang berjalan secara bersamaan dengan fungsi lain. Merek
 - Implementasi: Dibuat hanya dengan menambahkan keyword go di depan pemanggilan fungsi.
 - Multiplexing: Go runtime secara otomatis memetakan Goroutine ke sejumlah kecil thread OS (biasanya sama dengan jumlah core CPU Anda, diatur oleh GOMAXPROCS).
 
-```c
+```go
 package main
 
 import (
@@ -96,7 +96,7 @@ Channel adalah mekanisme komunikasi utama antara Goroutine. Channel memungkinkan
 | **Buffered**      | Channel dengan kapasitas tetap (N).                             | Pengirim memblokir jika buffer penuh. Penerima memblokir jika buffer kosong. |
 
 
-```c
+```go
 // Membuat channel unbuffered
 pesan := make(chan string) 
 
@@ -149,7 +149,7 @@ Paket `context` adalah alat penting untuk mengelola batas waktu (timeout), pemba
 - Tujuan Utama: Mengelola lifecycle (siklus hidup) sebuah permintaan. Ini memastikan bahwa ketika sebuah request dibatalkan oleh client (misalnya, client menutup browser), Goroutine yang mengerjakan tugas tersebut juga dihentikan, sehingga mencegah resource leak.
 - Penggunaan: Argumen `context.Context` harus menjadi argumen pertama di setiap fungsi yang berada di jalur request (misalnya, di Controller, Use Case, dan Repository).
 
-```c
+```go
 func (s *UserService) GetUser(ctx context.Context, id int) (*User, error) {
     // Di sini, Anda bisa cek ctx.Done() untuk melihat apakah
     // permintaan telah dibatalkan oleh klien (atau timeout).
@@ -167,7 +167,7 @@ func (s *UserService) GetUser(ctx context.Context, id int) (*User, error) {
 Go modern mendorong pola Error Wrapping alih-alih sekadar mengembalikan string error. Ini memberikan konteks dan memfasilitasi penanganan error yang lebih cerdas.
 - Masalah Lama: return `errors.New("database error: record not found")` — Ini adalah string mati yang sulit diolah.
 - Error Wrapping: Menggunakan `fmt.Errorf` dengan verb `%w` (wrap). Ini membungkus error yang lebih rendah (inner error) ke dalam error baru yang lebih tinggi (outer error).
-```c
+```go
 // Di layer Repository
 err := db.QueryRow("SELECT ...")
 if err != nil {
@@ -187,7 +187,7 @@ ISP adalah prinsip dari SOLID, yang menyatakan bahwa klien seharusnya tidak dipa
 - Pola Pikir: Lebih baik memiliki banyak antarmuka kecil dan spesifik daripada satu antarmuka besar yang gemuk (fat interface).
 - Di Golang: Sering disebut sebagai "Interfaces belong on the consumer side" (Interface milik sisi yang mengonsumsi/membutuhkan).
 - Contoh Buruk (Fat Interface):
-```c
+```go
 type Repository interface {
     Create(data interface{}) error // Dipakai
     Update(data interface{}) error // Dipakai
@@ -196,7 +196,7 @@ type Repository interface {
 }
 ```
 - Contoh Baik (Segregated Interfaces - Sesuai ISP):
-```c
+```go
 // Interface ini didefinisikan di layer Use Case (Consumer)
 type UserCreator interface {
     Create(user User) error
@@ -245,7 +245,7 @@ Ini adalah bagian paling penting dalam Clean Architecture: Handler TIDAK boleh b
 **Contoh Handler (Gin/Echo/Fiber)**
 
 Misalnya Anda memiliki Use Case di layer Application (`paymentService`):
-```c
+```go
 // 1. Layer Application (Use Case/Service)
 type PaymentService struct { /* dependencies... */ }
 
@@ -260,7 +260,7 @@ func (s *PaymentService) ProcessPayment(amount float64) error {
 ```
 
 **Controller/Handler (Layer Interface Adapters):**
-```c
+```go
 // 2. Layer Interface Adapters (Handler/Controller)
 
 // Handler memiliki dependency ke Use Case
@@ -344,7 +344,7 @@ Seperti yang sudah dibahas di Best Practices:
 4. **Database Transactions**
 
 Untuk operasi yang melibatkan beberapa langkah penulisan data yang harus bersifat Atomic (semuanya sukses atau semuanya gagal, seperti transfer uang), Database Transaction harus diimplementasikan di layer Repository.
-```c
+```go
 // Contoh Pola Transaksi di Repository
 func (r *PostgresRepo) Transfer(ctx context.Context, fromID, toID int, amount float64) error {
     tx, err := r.db.BeginTx(ctx, nil)
@@ -416,7 +416,7 @@ Pola yang Lebih Umum untuk Update: Pada praktik modern, pola Cache-Aside sering 
 3. **Implementasi di Golang (Repository Pattern)**
 
 Dalam Clean Architecture, logika Cache-Aside ada di layer Repository/Persistence.
-```c
+```go
 // Contoh Metode Repository (dengan Redis)
 type PaymentCacheRepository struct {
     DBClient *sql.DB // Koneksi PostgreSQL
