@@ -1,7 +1,5 @@
-# System Design Note
+# Microservices
 ##### Write by: Adrian Milano
-
-## **Microservices**
 
 ## **Service-To-Service Communication**
 #### 1. Pola Synchronous (Komunikasi Langsung)
