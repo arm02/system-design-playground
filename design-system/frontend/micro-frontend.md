@@ -179,9 +179,9 @@ Cocok untuk isolasi total tetapi overhead tinggi.
 ---------------------------
 
 ## 4. Komunikasi Antar Micro-Frontend
+Komunikasi antar micro-app adalah aspek paling kritikal. Terdapat berbagai pendekatan dengan trade-off masing-masing.
 
 ### Teknik Komunikasi
-
 1.  **Custom Events**
 2.  **Shared global event bus**
 3.  **URL-based communication**
@@ -195,6 +195,131 @@ window.dispatchEvent(new CustomEvent("cart:update", { detail: { count: 3 } }));
 
 // listen
 window.addEventListener("cart:update", (e) => console.log(e.detail));
+```
+
+------------------------------------------------------------------------
+
+### 4.1 **Custom Events (Browser Native)**
+
+✔ Simple\
+✔ Decoupled\
+✔ Framework-agnostic
+
+#### Dispatch Event
+
+``` js
+window.dispatchEvent(
+  new CustomEvent("cart:update", { detail: { count: 5 } })
+);
+```
+
+#### Listen Event
+
+``` js
+window.addEventListener("cart:update", (e) => {
+  console.log("Cart updated:", e.detail.count);
+});
+```
+
+#### Kapan digunakan?
+
+-   Skala kecil sampai menengah
+-   Event tidak terlalu sering
+
+------------------------------------------------------------------------
+
+### 4.2 **Shared Event Bus**
+
+Biasanya menggunakan library kecil seperti RxJS atau mitt.
+
+#### Contoh Event Bus
+
+``` js
+import mitt from "mitt";
+
+export const eventBus = mitt();
+```
+
+#### Publish
+
+``` js
+eventBus.emit("user:login", { username: "Kelvin" });
+```
+
+#### Subscribe
+
+``` js
+eventBus.on("user:login", (data) => console.log(data));
+```
+
+#### Kapan digunakan?
+
+-   Micro-app butuh hubungan event yang lebih kompleks
+-   Butuh pub-sub pattern
+
+------------------------------------------------------------------------
+
+### 4.3 **Global Shared State (Module Federation Shared Store)**
+
+#### Contoh penggunaan Zustand sebagai shared store
+
+Host mengekspor store global:
+
+``` js
+new ModuleFederationPlugin({
+  exposes: {
+    "./GlobalStore": "./src/store/globalStore",
+  }
+});
+```
+
+Micro-app lain mengimpor:
+
+``` js
+import useGlobalStore from "shell/GlobalStore";
+
+const user = useGlobalStore((s) => s.user);
+```
+
+#### Kapan digunakan?
+
+-   Aplikasi sangat terpadu (integrasi erat)
+-   State global perlu konsistensi real-time
+
+------------------------------------------------------------------------
+
+### 4.4 **URL-Based Communication**
+
+-   Gunakan query params untuk data kecil
+-   Gunakan hash untuk navigasi
+-   Sangat stabil & mudah didebug
+
+#### Contoh
+
+`/products?category=shoes&sort=popular`
+
+Micro-app lain cukup observe perubahan URL.
+
+------------------------------------------------------------------------
+
+### 4.5 **PostMessage (untuk iframe)**
+
+Jika micro-frontend memakai iframe:
+
+#### Kirim pesan
+
+``` js
+iframe.contentWindow.postMessage({ event: "ping" }, "*");
+```
+
+#### Dengarkan pesan
+
+``` js
+window.addEventListener("message", (e) => {
+  if (e.data.event === "ping") {
+    console.log("Ping received");
+  }
+});
 ```
 
 ------------------------------------------------------------------------
